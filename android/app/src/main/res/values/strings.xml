@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">HackerKeyboardApp</string>
+    <string name="app_name">Shadow Keys</string>
+    <string name="accessibility_service_label">Shadow Keys Input Injection</string>
 </resources>
