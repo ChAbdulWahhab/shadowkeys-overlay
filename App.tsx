@@ -12,11 +12,30 @@ import {
 import OverlayModule from './src/modules/OverlayModule';
 import KeyboardOverlay from './src/components/KeyboardOverlay';
 
+const SetupStep = ({number, title, description, completed, onPress, icon}: any) => (
+  <TouchableOpacity 
+    style={[styles.card, completed && {borderColor: '#4CAF50'}]} 
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.cardHeader}>
+      <Text style={styles.icon}>{completed ? '✅' : icon}</Text>
+      <View style={styles.cardTitleContainer}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardDescription}>{description}</Text>
+      </View>
+      <View style={[styles.cardAction, completed ? styles.actionActive : styles.actionInactive]}>
+        <Text style={styles.actionText}>{completed ? 'OK' : 'FIX'}</Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
 const App = () => {
   const [overlayGranted, setOverlayGranted] = useState(false);
   const [accessibilityEnabled, setAccessibilityEnabled] = useState(false);
   const [isServiceRunning, setIsServiceRunning] = useState(false);
-  const [showKeyboard, setShowKeyboard] = useState(false);
+  const [keyboardEnabled, setKeyboardEnabled] = useState(false);
 
   useEffect(() => {
     checkPermissions();
@@ -27,8 +46,13 @@ const App = () => {
   const checkPermissions = async () => {
     const overlay = await OverlayModule.canDrawOverlays();
     const accessibility = await OverlayModule.isAccessibilityServiceEnabled();
+    const keyboard = await OverlayModule.isKeyboardEnabled();
     setOverlayGranted(overlay);
     setAccessibilityEnabled(accessibility);
+    setKeyboardEnabled(keyboard);
+    
+    const running = await OverlayModule.isServiceRunning();
+    setIsServiceRunning(running);
   };
 
   const toggleService = async () => {
@@ -36,6 +60,10 @@ const App = () => {
       OverlayModule.stopService();
       setIsServiceRunning(false);
     } else {
+      if (!overlayGranted) {
+        OverlayModule.openOverlaySettings();
+        return;
+      }
       OverlayModule.startService();
       setIsServiceRunning(true);
     }
@@ -51,7 +79,7 @@ const App = () => {
           defaultSource={{ uri: 'ic_launcher' }}
         />
         <Text style={styles.headerTitle}>SHADOW KEYS</Text>
-        <Text style={styles.headerSubtitle}>PREMIUM OVERLAY TOOL</Text>
+        <Text style={styles.headerSubtitle}>PREMIUM CHEAT INJECTOR</Text>
       </View>
 
       <FlatList
@@ -60,60 +88,57 @@ const App = () => {
         renderItem={() => (
           <View>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>System Permissions</Text>
+              <Text style={styles.sectionTitle}>Required Setup</Text>
 
-              <PermissionItem
-                title="Overlay Permission"
-                status={overlayGranted}
-                onPress={() => OverlayModule.openOverlaySettings()}
-                description="Show button over apps"
-                icon="📱"
+              <SetupStep 
+                icon="⌨️"
+                title="Enable Cheat Keyboard"
+                description="Enable 'Cheat Keyboard' in System Settings"
+                completed={keyboardEnabled}
+                onPress={() => OverlayModule.openKeyboardSettings()}
               />
 
-              <PermissionItem
+              <SetupStep 
+                icon="📱"
+                title="Overlay Permission"
+                description="Required for the floating cheat button"
+                completed={overlayGranted}
+                onPress={() => OverlayModule.openOverlaySettings()}
+              />
+              
+              <SetupStep 
+                icon="⚙️"
                 title="Accessibility Service"
-                status={accessibilityEnabled}
+                description="Optional fallback for text injection"
+                completed={accessibilityEnabled}
                 onPress={() => OverlayModule.openAccessibilitySettings()}
-                description="Inject text into apps"
-                icon="⌨️"
               />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Service Control</Text>
               <TouchableOpacity
-                style={[styles.mainButton, overlayGranted && accessibilityEnabled ? styles.startButton : styles.disabledButton]}
+                style={[styles.mainButton, overlayGranted ? styles.startButton : styles.disabledButton]}
                 onPress={toggleService}
-                disabled={!overlayGranted || !accessibilityEnabled}
               >
                 <Text style={styles.mainButtonText}>
                   {isServiceRunning ? 'STOP SERVICE' : 'LAUNCH OVERLAY'}
                 </Text>
               </TouchableOpacity>
               <Text style={styles.hint}>
-                Assistive touch button will appear on launch.
+                Tap the floating button in-game to open cheats.
               </Text>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Test Interface</Text>
-              <TouchableOpacity
-                style={styles.secondaryBtn}
-                onPress={() => setShowKeyboard(!showKeyboard)}>
-                <Text style={styles.secondaryBtnText}>
-                  {showKeyboard ? 'HIDE KEYBOARD' : 'SHOW KEYBOARD'}
-                </Text>
-              </TouchableOpacity>
-
-              {showKeyboard && (
-                <View style={styles.testContainer}>
-                  <KeyboardOverlay
-                    onClose={() => setShowKeyboard(false)}
-                    onKeyPress={(key) => OverlayModule.sendInput(key, null)}
-                    onCommandPress={(cmd) => OverlayModule.sendInput(null, cmd)}
-                  />
+              <Text style={styles.sectionTitle}>Usage Guide</Text>
+              <View style={styles.card}>
+                <View style={{padding: 12}}>
+                  <Text style={styles.cardDescription}>1. In-game, tap the floating button.</Text>
+                  <Text style={[styles.cardDescription, {marginTop: 4}]}>2. Long-press button if keyboard picker is needed.</Text>
+                  <Text style={[styles.cardDescription, {marginTop: 4}]}>3. Select 'Cheat Keyboard' to inject cheats.</Text>
                 </View>
-              )}
+              </View>
             </View>
           </View>
         )}
@@ -122,8 +147,7 @@ const App = () => {
           <View style={styles.footer}>
             <Text style={styles.footerLabel}>DEVELOPED BY</Text>
             <Text style={styles.developerName}>ABDUL WAHAB</Text>
-            <Text style={styles.developerEmail}>bugssfixer@gmail.com</Text>
-            <Text style={styles.versionText}>v1.2.0 Gold Edition</Text>
+            <Text style={styles.versionText}>v1.5.0 Gold Edition</Text>
           </View>
         }
       />

@@ -82,6 +82,30 @@ class OverlayModule(reactContext: ReactApplicationContext) : ReactContextBaseJav
     }
 
     @ReactMethod
+    fun isKeyboardEnabled(promise: Promise) {
+        val imm = reactApplicationContext.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val enabledMethods = imm.enabledInputMethodList
+        val isEnabled = enabledMethods.any { it.packageName == reactApplicationContext.packageName }
+        promise.resolve(isEnabled)
+    }
+
+    @ReactMethod
+    fun openKeyboardSettings() {
+        val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        reactApplicationContext.startActivity(intent)
+    }
+
+    @ReactMethod
+    fun isServiceRunning(promise: Promise) {
+        val manager = reactApplicationContext.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val isRunning = manager.getRunningServices(Integer.MAX_VALUE).any { 
+            it.service.className == OverlayService::class.java.name 
+        }
+        promise.resolve(isRunning)
+    }
+
+    @ReactMethod
     fun toggleKeyboard() {
         val intent = Intent("com.hackerkeyboardapp.TOGGLE_KEYBOARD")
         reactApplicationContext.sendBroadcast(intent)
