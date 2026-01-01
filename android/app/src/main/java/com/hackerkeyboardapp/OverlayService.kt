@@ -104,6 +104,7 @@ class OverlayService : Service() {
             private var initialTouchX = 0f
             private var initialTouchY = 0f
             private var isDragging = false
+            private var touchDownTime = 0L
 
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.action) {
@@ -113,6 +114,7 @@ class OverlayService : Service() {
                         initialTouchX = event.rawX
                         initialTouchY = event.rawY
                         isDragging = false
+                        touchDownTime = System.currentTimeMillis()
                         v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).start()
                         return true
                     }
@@ -131,7 +133,13 @@ class OverlayService : Service() {
                     MotionEvent.ACTION_UP -> {
                         v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
                         if (!isDragging) {
-                            toggleKeyboard()
+                            val duration = System.currentTimeMillis() - touchDownTime
+                            if (duration > 500) {
+                                val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                                imm.showInputMethodPicker()
+                            } else {
+                                toggleKeyboard()
+                            }
                         }
                         return true
                     }
