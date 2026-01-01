@@ -45,3 +45,9 @@ coverage/
 .temp/
 tmp/
 .vscode/
+
+# Release and instruction files (not needed in repo)
+RELEASE_*.md
+GITHUB_RELEASE_*.md
+commit_message.txt
+create_release.ps1
